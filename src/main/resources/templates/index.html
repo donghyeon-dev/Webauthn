@@ -1,0 +1,131 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+<!--    <link th:href="@{/css/index.css}" rel="stylesheet" type="text/css">-->
+<!--    <script src="lib/u2f-api-1.1.js"></script>-->
+<!--    <script src="lib/text-encoding-0.7.0/encoding.js"></script>-->
+<!--    <script src="lib/text-encoding-0.7.0/encoding-indexes.js"></script>-->
+<!--    <script src="lib/base64js/base64js-1.3.0.min.js"></script>-->
+<!--    <script src="js/base64url.js"></script>-->
+<!--    <script src="js/webauthn.js"></script>-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script>
+    const cose_alg_ECDSA_w_SHA256 = -7;
+    const cose_alg_ECDSA_w_SHA512 = -36;
+    var createCredentialOptions = {
+        // Format of new credentials is publicKey
+        publicKey: {
+            // Relying Party
+            rp: {
+                name: "Example CORP",
+                id: "localhost",
+                icon: "https://login.example.com/login.ico"
+            },
+            // Cryptographic challenge from the server
+            challenge: new Uint8Array(26),
+            // User
+            user: {
+                id: new Uint8Array(16),
+                name: "john.p.smith@example.com",
+                displayName: "John P. Smith",
+            },
+            // Requested format of new keypair
+            pubKeyCredParams: [{
+                "alg": -7,
+                "type": "public-key"
+            },
+                {
+                    "alg": -8,
+                    "type": "public-key"
+                },
+                {
+                    "alg": -257,
+                    "type": "public-key"
+                }],
+            // Timeout after 1 minute
+            timeout: 60000,
+            // Do not send the authenticator's origin attestation
+            attestation: "direct",
+            extensions: {},
+            // Filter out authenticators which are bound to the device
+            authenticatorSelection:{
+                "requireResidentKey": false,
+                "userVerification": "preferred"
+            },
+            // Exclude already existing credentials for the user
+            excludeCredentials: []
+        }
+    };
+
+
+    function register(){
+
+        // var a = {"rp":{"name":"Yubico WebAuthn demo","id":"localhost"},"user":{"name":"123","displayName":"123","id":{"0":124,"1":201,"2":217,"3":23,"4":30,"5":36,"6":89,"7":138,"8":66,"9":76,"10":179,"11":140,"12":205,"13":183,"14":247,"15":77,"16":167,"17":141,"18":102,"19":91,"20":72,"21":157,"22":48,"23":207,"24":224,"25":194,"26":140,"27":73,"28":66,"29":3,"30":30,"31":230}},"challenge":{"0":4,"1":178,"2":201,"3":22,"4":117,"5":158,"6":28,"7":89,"8":250,"9":70,"10":49,"11":195,"12":119,"13":29,"14":255,"15":171,"16":207,"17":122,"18":21,"19":155,"20":77,"21":43,"22":73,"23":89,"24":198,"25":122,"26":68,"27":137,"28":203,"29":114,"30":64,"31":208},"pubKeyCredParams":[{"alg":-7,"type":"public-key"},{"alg":-8,"type":"public-key"},{"alg":-257,"type":"public-key"}],"excludeCredentials":[],"authenticatorSelection":{"requireResidentKey":false,"userVerification":"preferred"},"attestation":"direct","extensions":{}};
+        // navigator.credentials.create({
+        //     publicKey: a,
+        // });
+
+        // return webauthn.createCredential(12);
+
+        const username = document.getElementById('user_name').value;
+        const displayName = document.getElementById('display_name').value;
+        const credentialNickname = document.getElementById('credential_id').value;
+        const u2f = document.getElementById('u2f').checked;
+
+        let body = JSON.stringify({
+                username : username,
+                displayName: displayName,
+                credentialNickname : credentialNickname,
+                u2f : u2f
+            });
+        $.ajax({
+            url:"http://localhost:8088/registration",
+            type:"POST",
+            contentType:"application/json",
+            data:body,
+            success : function(data){
+                alert(data);
+            }
+        });
+
+/*
+        // Create the new credential with the options above
+        navigator.credentials.create(createCredentialOptions)
+            .then(function (newCredentialInfo) {
+                var attestationResponse = newCredentialInfo.response;
+                var clientExtensionsOutputs = newCredentialInfo.getClientExtensionsResults();
+
+                // Send the response to the relying party server
+                // it will verify the content and integrity before
+                // creating a new credential
+
+            }).catch(function (err) {
+            // Deal with any error properly
+            console.error(err);
+        });;
+*/
+
+
+
+    }
+
+</script>
+</head>
+<body>
+    <b>User name : </b>
+    <input type="text"  id="user_name">
+    <Br>
+    <b>Display Name : </b>
+    <input type="text" id="display_name">
+    <Br>
+    <b>Credential Id : </b>
+    <input type="text" id="credential_id">
+    <br>
+    <b>U2F 여부</b>
+    <input type="checkbox" id="u2f">
+    <button type="button" onclick="register()"> Register new account</button>
+</body>
+</html>
