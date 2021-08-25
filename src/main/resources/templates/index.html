@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Document</title>
-<!--    <link th:href="@{/css/index.css}" rel="stylesheet" type="text/css">-->
-<!--    <script src="lib/u2f-api-1.1.js"></script>-->
-<!--    <script src="lib/text-encoding-0.7.0/encoding.js"></script>-->
-<!--    <script src="lib/text-encoding-0.7.0/encoding-indexes.js"></script>-->
-<!--    <script src="lib/base64js/base64js-1.3.0.min.js"></script>-->
-<!--    <script src="js/base64url.js"></script>-->
-<!--    <script src="js/webauthn.js"></script>-->
+    <script src="lib/u2f-api-1.1.js"></script>
+    <script src="lib/text-encoding-0.7.0/encoding.js"></script>
+    <script src="lib/text-encoding-0.7.0/encoding-indexes.js"></script>
+    <script th:src="@{/lib/base64js/base64js-1.3.0.min.js}"></script>
+    <script th:src="@{/js/base64url.js}"></script>
+    <script th:src="@{/js/webauthn.js}"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <script>
@@ -60,6 +59,41 @@
         }
     };
 
+    /**
+     * Create a WebAuthn credential.
+     *
+     * @param request: object - A PublicKeyCredentialCreationOptions object, except
+     *   where binary values are base64url encoded strings instead of byte arrays
+     *
+     * @return a PublicKeyCredentialCreationOptions suitable for passing as the
+     *   `publicKey` parameter to `navigator.credentials.create()`
+     */
+    function decodePublicKeyCredentialCreationOptions(request) {
+        if (request.excludeCredentials === undefined){
+            request.excludeCredentials = []
+        };
+        const excludeCredentials = request.excludeCredentials.map(credential => extend(
+            credential, {
+                id: base64url.toByteArray(credential.id),
+            }));
+
+        const publicKeyCredentialCreationOptions = extend(
+            request, {
+                attestation: 'direct',
+                user: extend(
+                    request.user, {
+                        id: base64url.toByteArray(request.user.id),
+                    }),
+                challenge: base64url.toByteArray(request.challenge),
+                excludeCredentials,
+            });
+
+        return publicKeyCredentialCreationOptions;
+    }
+
+    function extend(obj, more) {
+        return Object.assign({}, obj, more);
+    }
 
     function register(){
 
@@ -86,30 +120,24 @@
             type:"POST",
             contentType:"application/json",
             data:body,
+            async:false,
             success : function(data){
-                alert(data);
+                console.log( "SuccessData\n"+ JSON.stringify(data) );
+                // console.log("credential Result \n"+navigator.credentials.get({publicKey: decodePublicKeyCredentialCreationOptions(result)}));
             }
-        });
-
-/*
-        // Create the new credential with the options above
-        navigator.credentials.create(createCredentialOptions)
-            .then(function (newCredentialInfo) {
-                var attestationResponse = newCredentialInfo.response;
-                var clientExtensionsOutputs = newCredentialInfo.getClientExtensionsResults();
-
-                // Send the response to the relying party server
-                // it will verify the content and integrity before
-                // creating a new credential
-
-            }).catch(function (err) {
-            // Deal with any error properly
-            console.error(err);
-        });;
-*/
+        }).then(res => createCredential(res))
+        .then( webauthn.responseToObject )
+        .then(finish => console.log("최종제발"+JSON.stringify(finish)))
+        ;
 
 
 
+
+    }
+
+    function createCredential(request){
+        console.log("CreateCredential Info\n"+JSON.stringify(decodePublicKeyCredentialCreationOptions(request.publicKeyCredentialCreationOptions)));
+        return navigator.credentials.create({publicKey: (decodePublicKeyCredentialCreationOptions(request.publicKeyCredentialCreationOptions))});
     }
 
 </script>

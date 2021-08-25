@@ -26,6 +26,8 @@ spring:
   jackson:
     serialization:
       fail-on-empty-beans: false
+    default-property-inclusion: non_absent
+
 logging:
   level:
     root: INFO
