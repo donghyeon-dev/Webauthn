@@ -1,8 +1,10 @@
 package com.webauthn.dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
+import com.yubico.webauthn.data.PublicKeyCredential;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,16 +20,16 @@ import java.util.Optional;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class RegResDto {
+public class FinishReqDto {
 
     private String username;
 
     private Optional<String> credentialNickname;
 
-    private ByteArray requestId;
+    private  ByteArray requestId;
 
-    private PublicKeyCredentialCreationOptions publicKeyCredentialCreationOptions;
+    private  PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>
+            credential;
 
-    private Optional<ByteArray> sessionToken;
-
+    private  Optional<ByteArray> sessionToken;
 }

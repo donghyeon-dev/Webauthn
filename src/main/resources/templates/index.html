@@ -69,9 +69,9 @@
      *   `publicKey` parameter to `navigator.credentials.create()`
      */
     function decodePublicKeyCredentialCreationOptions(request) {
-        if (request.excludeCredentials === undefined){
-            request.excludeCredentials = []
-        };
+        // if (request.excludeCredentials === undefined){
+        //     request.excludeCredentials = []
+        // };
         const excludeCredentials = request.excludeCredentials.map(credential => extend(
             credential, {
                 id: base64url.toByteArray(credential.id),
@@ -97,18 +97,13 @@
 
     function register(){
 
-        // var a = {"rp":{"name":"Yubico WebAuthn demo","id":"localhost"},"user":{"name":"123","displayName":"123","id":{"0":124,"1":201,"2":217,"3":23,"4":30,"5":36,"6":89,"7":138,"8":66,"9":76,"10":179,"11":140,"12":205,"13":183,"14":247,"15":77,"16":167,"17":141,"18":102,"19":91,"20":72,"21":157,"22":48,"23":207,"24":224,"25":194,"26":140,"27":73,"28":66,"29":3,"30":30,"31":230}},"challenge":{"0":4,"1":178,"2":201,"3":22,"4":117,"5":158,"6":28,"7":89,"8":250,"9":70,"10":49,"11":195,"12":119,"13":29,"14":255,"15":171,"16":207,"17":122,"18":21,"19":155,"20":77,"21":43,"22":73,"23":89,"24":198,"25":122,"26":68,"27":137,"28":203,"29":114,"30":64,"31":208},"pubKeyCredParams":[{"alg":-7,"type":"public-key"},{"alg":-8,"type":"public-key"},{"alg":-257,"type":"public-key"}],"excludeCredentials":[],"authenticatorSelection":{"requireResidentKey":false,"userVerification":"preferred"},"attestation":"direct","extensions":{}};
-        // navigator.credentials.create({
-        //     publicKey: a,
-        // });
-
-        // return webauthn.createCredential(12);
-
         const username = document.getElementById('user_name').value;
         const displayName = document.getElementById('display_name').value;
         const credentialNickname = document.getElementById('credential_id').value;
         const u2f = document.getElementById('u2f').checked;
 
+        var request;
+        var credentials;
         let body = JSON.stringify({
                 username : username,
                 displayName: displayName,
@@ -122,12 +117,31 @@
             data:body,
             async:false,
             success : function(data){
+                request=data;
                 console.log( "SuccessData\n"+ JSON.stringify(data) );
                 // console.log("credential Result \n"+navigator.credentials.get({publicKey: decodePublicKeyCredentialCreationOptions(result)}));
             }
         }).then(res => createCredential(res))
         .then( webauthn.responseToObject )
-        .then(finish => console.log("최종제발"+JSON.stringify(finish)))
+        .then(finish => credentials=finish)
+        .then(
+            $.ajax({
+                url:"http://localhost:8088/registration/finish",
+                type:"POST",
+                contentType:"application/json",
+                data:JSON.stringify({
+                    requestId: request.requestId,
+                    credential: credentials,
+                    sessionToken: request.sessionToken || null
+
+                }),
+                async:false,
+                success : function(finishRes){
+                    console.log( "진짜 최종 결과물!!!\n"+ JSON.stringify(finishRes) );
+                }
+            })
+
+        )
         ;
 
 
