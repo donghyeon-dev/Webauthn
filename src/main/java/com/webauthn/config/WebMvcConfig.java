@@ -1,5 +1,8 @@
 package com.webauthn.config;
 
+import com.webauthn.repository.CredentialsRepository;
+import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.data.RelyingPartyIdentity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

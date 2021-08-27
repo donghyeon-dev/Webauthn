@@ -1,6 +1,7 @@
 package com.webauthn.repository;
 
 import com.webauthn.domain.CredentialEntity;
+import com.webauthn.domain.UserEntity;
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.data.ByteArray;
@@ -9,8 +10,13 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.ObjectUtils;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static javafx.scene.input.KeyCode.T;
 
 @Repository
 @AllArgsConstructor
@@ -21,7 +27,19 @@ public class CredentialsRepository implements CredentialRepository {
 
     @Override
     public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username) {
-        return null;
+        UserEntity targetEntity = userRepository.findUserEntityByName(username);
+        if(ObjectUtils.isEmpty(targetEntity)){
+            return new HashSet<>();
+        } else {
+            return
+                targetEntity.getUserCredentials().stream()
+                    .map(
+                            credential ->
+                                    PublicKeyCredentialDescriptor.builder()
+                                            .id(ByteArray.fromBase64(credential.getCredentialId()))
+                                            .build()
+                    ).collect(Collectors.toSet());
+        }
     }
 
     @Override
@@ -41,7 +59,22 @@ public class CredentialsRepository implements CredentialRepository {
 
     @Override
     public Set<RegisteredCredential> lookupAll(ByteArray credentialId) {
-        return null;
+        List<CredentialEntity> list =credentialEntityRepository.findAll();
+        if(ObjectUtils.isEmpty(list)){
+            return new HashSet<>();
+        } else {
+        return credentialEntityRepository.findAll().stream()
+                        .map(
+                                reg ->
+                                        RegisteredCredential.builder()
+                                                .credentialId(ByteArray.fromBase64(reg.getCredentialId()))
+                                                .userHandle(ByteArray.fromBase64(reg.getUserHandle()))
+                                                .publicKeyCose(ByteArray.fromBase64(reg.getPublicKeyCose()))
+                                                .signatureCount(reg.getSignatureCount())
+                                                .build()
+                        )
+                        .collect(Collectors.toSet());
+        }
     }
 
     public boolean userExist(String username){

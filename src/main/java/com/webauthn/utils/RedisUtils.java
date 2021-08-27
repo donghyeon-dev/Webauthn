@@ -56,7 +56,7 @@ public class RedisUtils {
      * @return
      * @throws JsonProcessingException
      */
-    public boolean isInRedis(String key) throws JsonProcessingException{
+    public boolean isInRedis(String key) {
         ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
         String value = valueOperations.get(key);
 

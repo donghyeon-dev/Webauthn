@@ -18,6 +18,8 @@ import org.springframework.util.ObjectUtils;
 import javax.management.InvalidAttributeValueException;
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 
 @Service
@@ -61,6 +63,7 @@ public class RegistrationService {
         RelyingParty rp = RelyingParty.builder()
                 .identity(rpIdentity)
                 .credentialRepository(credentialsRepository)
+                .origins(new HashSet<String>(Collections.singleton("http://localhost:8088")))
                 .build();
 
         // 해당 username으로 된 Entity가 있는지 검색 후 없다면 새 Entity 생성
@@ -78,7 +81,7 @@ public class RegistrationService {
             UserEntity newUser = UserEntity.builder()
                     .name(username)
                     .displayName(displayName)
-                    .id(requestId.getBase64())
+                    .id(userId.getBase64())
                     .build();
 
             // todo Builder패턴으로 변경해야함
@@ -128,6 +131,7 @@ public class RegistrationService {
         RelyingParty rp = RelyingParty.builder()
                 .identity(rpIdentity)
                 .credentialRepository(credentialsRepository)
+                .origins(new HashSet<String>(Collections.singleton("http://localhost:8088")))
                 .build();
 
 
@@ -140,10 +144,11 @@ public class RegistrationService {
         RedisDto exRequest = redisUtils.getSession(requestId);
         redisUtils.deleteSession(requestId);
 
-        if(!ObjectUtils.isEmpty(exRequest)){
+        // Empty check
+        if(ObjectUtils.isEmpty(exRequest)){
             throw new InvalidAttributeValueException("Session is empty!!");
         }
-        // session에 저장된 값이 있다면
+        // session 내 저장된 값이 있다면
         RegistrationResult registrationResult =
                 rp.finishRegistration(
                         FinishRegistrationOptions.builder()
@@ -152,7 +157,8 @@ public class RegistrationService {
                                 .build()
                 );
 
-        if(credentialsRepository.userExist(exRequest.getUsername())){
+        // 세션내 userName과 request userName 비교
+        if(exRequest.getUsername().equals(requestBody.getUsername())){
 
             final boolean isValidSession = exRequest.getSessionToken().equals(
                                     exRequest.getPublicKeyCredentialCreationOptions().getUser().getId());
@@ -200,6 +206,8 @@ public class RegistrationService {
                                     })
                             .map(AttestationCertInfoDto::new))
                     .build();
+
+            // Credential 정보랑 UserEntity 업데이트
 
             return finishResDto;
         } else {

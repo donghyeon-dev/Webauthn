@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Entity(name = "credentials")
 @Getter
@@ -27,16 +28,20 @@ public class CredentialEntity {
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
+    private String credentialNickname;
+
+
+    // RegisteredCredential 목록
+    // ByteArray to Base64
     @Column
     private String credentialId;
 
-//    private String username;
+    @Column String userHandle;
+
+    @Column String publicKeyCose;
 
 
-    private int coseAlgorithm;
 
-    @Basic(fetch = FetchType.LAZY)
-    private byte[] publicKey;
 
 
     private LocalDateTime created;
