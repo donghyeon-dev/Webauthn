@@ -12,52 +12,6 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <script>
-    const cose_alg_ECDSA_w_SHA256 = -7;
-    const cose_alg_ECDSA_w_SHA512 = -36;
-    var createCredentialOptions = {
-        // Format of new credentials is publicKey
-        publicKey: {
-            // Relying Party
-            rp: {
-                name: "Example CORP",
-                id: "localhost",
-                icon: "https://login.example.com/login.ico"
-            },
-            // Cryptographic challenge from the server
-            challenge: new Uint8Array(26),
-            // User
-            user: {
-                id: new Uint8Array(16),
-                name: "john.p.smith@example.com",
-                displayName: "John P. Smith",
-            },
-            // Requested format of new keypair
-            pubKeyCredParams: [{
-                "alg": -7,
-                "type": "public-key"
-            },
-                {
-                    "alg": -8,
-                    "type": "public-key"
-                },
-                {
-                    "alg": -257,
-                    "type": "public-key"
-                }],
-            // Timeout after 1 minute
-            timeout: 60000,
-            // Do not send the authenticator's origin attestation
-            attestation: "direct",
-            extensions: {},
-            // Filter out authenticators which are bound to the device
-            authenticatorSelection:{
-                "requireResidentKey": false,
-                "userVerification": "preferred"
-            },
-            // Exclude already existing credentials for the user
-            excludeCredentials: []
-        }
-    };
 
     /**
      * Create a WebAuthn credential.
@@ -99,7 +53,7 @@
 
         const username = document.getElementById('user_name').value;
         const displayName = document.getElementById('display_name').value;
-        const credentialNickname = document.getElementById('credential_id').value;
+        const credentialNickname = document.getElementById('credential_nickname').value;
         const u2f = document.getElementById('u2f').checked;
 
         var request;
@@ -110,49 +64,49 @@
                 credentialNickname : credentialNickname,
                 u2f : u2f
             });
+
         $.ajax({
             url:"http://localhost:8088/registration",
             type:"POST",
             contentType:"application/json",
             data:body,
             async:false,
-            success : function(data){
+            success : async function(data){
                 request=data;
                 console.log( "SuccessData\n"+ JSON.stringify(data) );
-                // console.log("credential Result \n"+navigator.credentials.get({publicKey: decodePublicKeyCredentialCreationOptions(result)}));
+                var credential = await createCredential(data);
+                var result = await webauthn.responseToObject(credential);
+                return requestFinish(request,result);
             }
-        }).then(res => createCredential(res))
-        .then( webauthn.responseToObject )
-        .then(finish => credentials=finish)
-        .then(
-            $.ajax({
-                url:"http://localhost:8088/registration/finish",
-                type:"POST",
-                contentType:"application/json",
-                data:JSON.stringify({
-                    requestId: request.requestId,
-                    credential: credentials,
-                    sessionToken: request.sessionToken || null
 
-                }),
-                async:false,
-                success : function(finishRes){
-                    console.log( "진짜 최종 결과물!!!\n"+ JSON.stringify(finishRes) );
-                }
-            })
-
-        )
+        })
         ;
-
-
-
-
     }
 
-    function createCredential(request){
+    async function requestFinish(request,credentials){
+        $.ajax({
+            url:"http://localhost:8088/registration/finish",
+            type:"POST",
+            contentType:"application/json",
+            data:JSON.stringify({
+                requestId: request.requestId,
+                credential: credentials,
+                sessionToken: request.sessionToken || null,
+                username: request.username,
+                credentialNickname: request.credentialNickname
+            }),
+            async:false,
+            success : function(finishRes){
+                console.log( "진짜 최종 결과물!!!\n"+ JSON.stringify(finishRes) );
+            }
+        })
+    }
+
+    async function createCredential(request){
         console.log("CreateCredential Info\n"+JSON.stringify(decodePublicKeyCredentialCreationOptions(request.publicKeyCredentialCreationOptions)));
-        return navigator.credentials.create({publicKey: (decodePublicKeyCredentialCreationOptions(request.publicKeyCredentialCreationOptions))});
+        return await navigator.credentials.create({publicKey: (decodePublicKeyCredentialCreationOptions(request.publicKeyCredentialCreationOptions))});
     }
+
 
 </script>
 </head>
@@ -163,8 +117,8 @@
     <b>Display Name : </b>
     <input type="text" id="display_name">
     <Br>
-    <b>Credential Id : </b>
-    <input type="text" id="credential_id">
+    <b>Credential Nickname : </b>
+    <input type="text" id="credential_nickname">
     <br>
     <b>U2F 여부</b>
     <input type="checkbox" id="u2f">
