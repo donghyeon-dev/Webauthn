@@ -28,6 +28,6 @@ public class RegResDto {
 
     private PublicKeyCredentialCreationOptions publicKeyCredentialCreationOptions;
 
-    private Optional<ByteArray> sessionToken;
+    private ByteArray sessionToken;
 
 }

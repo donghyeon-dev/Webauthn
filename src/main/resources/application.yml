@@ -39,3 +39,4 @@ logging:
   level:
     root: INFO
     com.webauthn.controller: DEBUG
+    com.webauthn.service: DEBUG

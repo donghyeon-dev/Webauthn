@@ -28,7 +28,7 @@ public class RedisUtils {
     /**
      * Redis Session에 값을 넣는다.
      *
-     * @param key
+     * @param key (Base64 Encoded id)
      * @param vo
      */
     public void putSession(String key, RedisDto vo) throws JsonProcessingException {
@@ -91,8 +91,8 @@ public class RedisUtils {
         String value = valueOperations.get(key);
         RedisDto outpVo = objectMapper.readValue(value, RedisDto.class);
 
-        Optional<ByteArray> storedToken = outpVo.getSessionToken();
-        String storedTokenString = storedToken.get().getBase64();
+        ByteArray storedToken = outpVo.getSessionToken();
+        String storedTokenString = storedToken.getBase64();
         return token.equals(storedTokenString);
 
     }

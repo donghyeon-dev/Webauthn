@@ -99,14 +99,14 @@ public class RegistrationService {
                                     )
                             .build()
                             ),
-                    Optional.ofNullable(userId));
+                    userId);
 
             // 아마 이러고 RegRes값과 생성한 유저엔티티를. Redis에 보관
             RedisDto redisDto = RedisDto.builder()
                     .credentialNickname(Optional.ofNullable(credentialNickname))
                     .publicKeyCredentialCreationOptions(resDto.getPublicKeyCredentialCreationOptions())
                     .requestId(requestId)
-                    .sessionToken( Optional.ofNullable(userId))
+                    .sessionToken(userId)
                     .user(newUser)
                     .username(username)
                     .build();
@@ -160,12 +160,11 @@ public class RegistrationService {
         // 세션내 userName과 request userName 비교
         if(exRequest.getUsername().equals(requestBody.getUsername())){
 
-            final boolean isValidSession = exRequest.getSessionToken().equals(
-                                    exRequest.getPublicKeyCredentialCreationOptions().getUser().getId());
+            final boolean isValidSession = exRequest.getSessionToken().getBase64().equals(
+                                    exRequest.getPublicKeyCredentialCreationOptions().getUser().getId().getBase64());
             if(!isValidSession){
-                throw new InvalidAttributeValueException("User is already exist!!");
+                throw new InvalidAttributeValueException("Token is not valid!");
             }
-
             // SuccessResult 파라미터들 생성
             RegResDto regResDto = RegResDto.builder()
                     .username(exRequest.getUsername())
@@ -208,6 +207,7 @@ public class RegistrationService {
                     .build();
 
             // Credential 정보랑 UserEntity 업데이트
+
 
             return finishResDto;
         } else {

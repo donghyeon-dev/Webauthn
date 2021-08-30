@@ -29,7 +29,7 @@ public class RedisDto {
 
     private PublicKeyCredentialCreationOptions publicKeyCredentialCreationOptions;
 
-    private Optional<ByteArray> sessionToken;
+    private ByteArray sessionToken;
 
     private UserEntity user;
 }
