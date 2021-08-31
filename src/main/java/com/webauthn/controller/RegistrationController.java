@@ -8,6 +8,7 @@ import com.webauthn.dtos.RegResDto;
 import com.webauthn.service.RegistrationService;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.omg.CORBA.DynAnyPackage.InvalidValue;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +19,7 @@ import javax.management.InvalidAttributeValueException;
 
 @RestController
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class RegistrationController {
 
     private final RegistrationService registrationService;

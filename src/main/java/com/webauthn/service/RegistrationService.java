@@ -118,7 +118,7 @@ public class RegistrationService {
             userRepository.flush();
                     return resDto;
         } else {
-            throw new InvalidAttributeValueException();
+            throw new InvalidAttributeValueException("Username is already exist!!");
         }
     };
 
