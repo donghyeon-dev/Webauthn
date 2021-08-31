@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Entity(name = "credentials")
 @Getter
@@ -22,14 +21,13 @@ public class CredentialEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private long signatureCount;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
     private String credentialNickname;
 
+    private LocalDateTime created;
 
     // RegisteredCredential 목록
     // ByteArray to Base64
@@ -40,11 +38,8 @@ public class CredentialEntity {
 
     @Column String publicKeyCose;
 
+    private long signatureCount;
 
-
-
-
-    private LocalDateTime created;
 
     private String getUserName(){
         return user.getName();

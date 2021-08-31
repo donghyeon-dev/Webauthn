@@ -7,6 +7,7 @@ import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.ObjectUtils;
 
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 import static javafx.scene.input.KeyCode.T;
 
 @Repository
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class CredentialsRepository implements CredentialRepository {
 
     private final UserRepository userRepository;

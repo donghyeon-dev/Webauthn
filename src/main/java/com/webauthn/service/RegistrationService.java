@@ -2,6 +2,7 @@ package com.webauthn.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.webauthn.domain.CredentialEntity;
 import com.webauthn.domain.UserEntity;
 import com.webauthn.dtos.*;
 import com.webauthn.repository.CredentialRepository;
@@ -12,18 +13,18 @@ import com.yubico.webauthn.*;
 import com.yubico.webauthn.data.*;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import javax.management.InvalidAttributeValueException;
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class RegistrationService {
 
     private final UserRepository userRepository;
@@ -112,8 +113,9 @@ public class RegistrationService {
                     .build();
             redisUtils.putSession(requestId.getBase64(), redisDto);
 
-//            userRepository.save(newUser);
-//            userRepository.flush();
+            // userEntity 인서트
+            userRepository.save(newUser);
+            userRepository.flush();
                     return resDto;
         } else {
             throw new InvalidAttributeValueException();
@@ -174,7 +176,34 @@ public class RegistrationService {
                     .sessionToken(exRequest.getSessionToken())
                     .build();
             // SuccessResult 생성
-            FinishResDto finishResDto = FinishResDto.builder()
+
+            // Credential 정보랑 UserEntity 인서트
+            UserEntity targetUser = userRepository.findUserEntityByName(requestBody.getUsername());
+            CredentialEntity credentialEntity = CredentialEntity.builder()
+                    .credentialNickname(exRequest.getCredentialNickname().get())
+                    .created(LocalDateTime.now())
+                    .credentialId(registrationResult.getKeyId().getId().getBase64())
+                    .userHandle(exRequest.getPublicKeyCredentialCreationOptions().getUser().getId().getBase64())
+                    .publicKeyCose(registrationResult.getPublicKeyCose().getBase64())
+                    .signatureCount(requestBody.getCredential().getResponse().getParsedAuthenticatorData().getSignatureCounter())
+                    .user(targetUser)
+                    .build();
+            List<CredentialEntity> list = new ArrayList<>();
+            list.add(credentialEntity);
+            UserEntity updateUser = UserEntity.builder()
+                    .userCredentials(list)
+                    .userId(targetUser.getUserId())
+                    .id(targetUser.getId())
+                    .name(targetUser.getName())
+                    .displayName(targetUser.getDisplayName())
+                    .build();
+
+            credentialEntityRepository.save(credentialEntity);
+            userRepository.save(updateUser);
+            credentialEntityRepository.flush();
+            userRepository.flush();
+
+            return FinishResDto.builder()
                     .request(regResDto)
                     .response(requestBody)
                     .registration(CredentialRegistrationDto.builder()
@@ -205,11 +234,6 @@ public class RegistrationService {
                                     })
                             .map(AttestationCertInfoDto::new))
                     .build();
-
-            // Credential 정보랑 UserEntity 업데이트
-
-
-            return finishResDto;
         } else {
             throw new InvalidAttributeValueException("User is not exist!!");
 
