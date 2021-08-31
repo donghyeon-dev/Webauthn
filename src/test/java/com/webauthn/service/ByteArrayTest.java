@@ -29,7 +29,6 @@ public class ByteArrayTest {
         ByteArray stringedRandomToBA = ByteArray.fromBase64(randomToString);
 
         assertEquals(random,stringedRandomToBA);
-
     }
 
     @Test
@@ -38,6 +37,5 @@ public class ByteArrayTest {
         ByteArray random2 = registrationService.getRandomByte(32);
 
         assertNotEquals(random,random2);
-
     }
 }
