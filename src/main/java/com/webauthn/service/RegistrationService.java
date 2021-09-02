@@ -2,24 +2,22 @@ package com.webauthn.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.webauthn.utils.CommonUtils;
 import com.webauthn.domain.CredentialEntity;
 import com.webauthn.domain.UserEntity;
-import com.webauthn.dtos.*;
+import com.webauthn.dtos.registration.*;
 import com.webauthn.repository.CredentialRepository;
-import com.webauthn.repository.CredentialsRepository;
 import com.webauthn.repository.UserRepository;
 import com.webauthn.utils.RedisUtils;
 import com.yubico.webauthn.*;
 import com.yubico.webauthn.data.*;
 import com.yubico.webauthn.exception.RegistrationFailedException;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import javax.management.InvalidAttributeValueException;
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -28,22 +26,11 @@ import java.util.*;
 public class RegistrationService {
 
     private final UserRepository userRepository;
-    private final CredentialsRepository credentialsRepository;
     private final CredentialRepository credentialEntityRepository;
-    private final static SecureRandom random = new SecureRandom();
     private final RedisUtils redisUtils;
+    private final CommonUtils commonUtils;
 
-    /**
-     * id값 생성을 위한 RandomBytecode 생성 메서드
-     * @param length
-     * @return
-     */
-    public ByteArray getRandomByte(int length){
-        byte[] bt = new byte[length];
-        random.nextBytes(bt);
 
-        return new ByteArray(bt);
-    }
 
     public RegResDto startRegistration(RegReqDto requestBody) throws InvalidAttributeValueException, JsonProcessingException {
 
@@ -52,20 +39,8 @@ public class RegistrationService {
         String displayName = requestBody.getDisplayName();
         String credentialNickname = requestBody.getCredentialNickname();
         boolean requiredResidentKey = requestBody.isRequireResidentKey();
-        ByteArray userId = getRandomByte(32);
-        ByteArray requestId = getRandomByte(32);
-
-        //RelyingParty 선언
-        RelyingPartyIdentity rpIdentity = RelyingPartyIdentity.builder()
-                .id("localhost")
-                .name("Webauthn with Sprigboot")
-                .build();
-
-        RelyingParty rp = RelyingParty.builder()
-                .identity(rpIdentity)
-                .credentialRepository(credentialsRepository)
-                .origins(new HashSet<String>(Collections.singleton("http://localhost:8088")))
-                .build();
+        ByteArray userId = commonUtils.getRandomByte(32);
+        ByteArray requestId = commonUtils.getRandomByte(32);
 
         // 해당 username으로 된 Entity가 있는지 검색 후 없다면 새 Entity 생성
         UserEntity userOptional = userRepository.findUserEntityByName(username);
@@ -90,7 +65,7 @@ public class RegistrationService {
                     username,
                     Optional.ofNullable(credentialNickname),
                     requestId,
-                    rp.startRegistration(
+                    commonUtils.rp().startRegistration(
                             StartRegistrationOptions.builder()
                                     .user(regiUser)
                                     .authenticatorSelection (
@@ -104,12 +79,8 @@ public class RegistrationService {
 
             // 아마 이러고 RegRes값과 생성한 유저엔티티를. Redis에 보관
             RedisDto redisDto = RedisDto.builder()
-                    .credentialNickname(Optional.ofNullable(credentialNickname))
-                    .publicKeyCredentialCreationOptions(resDto.getPublicKeyCredentialCreationOptions())
-                    .requestId(requestId)
-                    .sessionToken(userId)
                     .user(newUser)
-                    .username(username)
+                    .registrationResponse(resDto)
                     .build();
             redisUtils.putSession(requestId.getBase64(), redisDto);
 
@@ -123,36 +94,22 @@ public class RegistrationService {
     };
 
     public FinishResDto finishRegistration(FinishReqDto requestBody) throws JsonProcessingException, InvalidAttributeValueException, RegistrationFailedException {
-
-        //RelyingParty 선언
-        RelyingPartyIdentity rpIdentity = RelyingPartyIdentity.builder()
-                .id("localhost")
-                .name("Webauthn with Sprigboot")
-                .build();
-
-        RelyingParty rp = RelyingParty.builder()
-                .identity(rpIdentity)
-                .credentialRepository(credentialsRepository)
-                .origins(new HashSet<String>(Collections.singleton("http://localhost:8088")))
-                .build();
-
-
         // 검증
         String requestId = requestBody.getRequestId().getBase64();
-        boolean isInRedis = redisUtils.isRequestIdInRedis(requestId);
+        boolean isInRedis = redisUtils.isRegisterRequestIdInRedis(requestId);
         if(!isInRedis){
-            throw new InvalidAttributeValueException("Username is already in session!!");
+            throw new InvalidAttributeValueException("Invalid RequestId!!");
         }
-        RedisDto exRequest = redisUtils.getSession(requestId);
+        RegResDto exRequest = redisUtils.getSession(requestId).getRegistrationResponse();
         redisUtils.deleteSession(requestId);
 
         // Empty check
         if(ObjectUtils.isEmpty(exRequest)){
-            throw new InvalidAttributeValueException("Session is empty!!");
+            throw new NullPointerException("Session is empty!!");
         }
         // session 내 저장된 값이 있다면
         RegistrationResult registrationResult =
-                rp.finishRegistration(
+                commonUtils.rp().finishRegistration(
                         FinishRegistrationOptions.builder()
                                 .request(exRequest.getPublicKeyCredentialCreationOptions())
                                 .response(requestBody.getCredential())

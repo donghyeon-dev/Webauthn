@@ -1,16 +1,14 @@
 package com.webauthn.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.webauthn.dtos.FinishReqDto;
-import com.webauthn.dtos.FinishResDto;
-import com.webauthn.dtos.RegReqDto;
-import com.webauthn.dtos.RegResDto;
+import com.webauthn.dtos.registration.FinishReqDto;
+import com.webauthn.dtos.registration.FinishResDto;
+import com.webauthn.dtos.registration.RegReqDto;
+import com.webauthn.dtos.registration.RegResDto;
 import com.webauthn.service.RegistrationService;
 import com.yubico.webauthn.exception.RegistrationFailedException;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.omg.CORBA.DynAnyPackage.InvalidValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;

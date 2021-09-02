@@ -49,7 +49,7 @@
         return Object.assign({}, obj, more);
     }
 
-    function register(){
+    register = () =>{
 
         const username = document.getElementById('user_name').value;
         const displayName = document.getElementById('display_name').value;
@@ -72,18 +72,41 @@
             data:body,
             async:false,
             success : async function(data){
-                request=data;
-                console.log( "SuccessData\n"+ JSON.stringify(data) );
+                console.log( "startRegistration() Result Data\n"+ JSON.stringify(data) );
                 var credential = await createCredential(data);
                 var result = await webauthn.responseToObject(credential);
-                return requestFinish(request,result);
+                return registrationFinish(data,result);
             }
 
         })
         ;
     }
 
-    async function requestFinish(request,credentials){
+    authenticate = () => {
+        const username = document.getElementById('user_name').value;
+
+        const body = JSON.stringify({
+            username: username
+        })
+
+        $.ajax({
+            url:"http://localhost:8088/authenticate",
+            type:"POST",
+            contentType:"application/json",
+            data:body,
+            async: false,
+            success: async function(res){
+                console.log("startAuthenticate() Result Data\n" + JSON.stringify(res));
+                var authRequest = await executeAuthenticateRequest(res);
+                var result = await webauthn.responseToObject(authRequest);
+                return authenticateFinish(res,result);
+            }
+        })
+    }
+
+
+
+    async function registrationFinish(request,credentials){
         $.ajax({
             url:"http://localhost:8088/registration/finish",
             type:"POST",
@@ -97,8 +120,26 @@
             }),
             async:false,
             success : function(finishRes){
-                console.log( "진짜 최종 결과물!!!\n"+ JSON.stringify(finishRes) );
+                console.log( "registrationFinish Response\n"+ JSON.stringify(finishRes) );
             }
+        })
+    }
+
+    async function authenticateFinish(request, credentails){
+        $.ajax({
+            url:"http://localhost:8088/authenticate/finish",
+            type:"POST",
+            contentType:"application/json",
+            data: JSON.stringify({
+                requestId: request.requestId,
+                credential: credentails,
+                sessionToken: request.sessionToken || null
+            }),
+            async: false,
+            success: function(finishRes){
+                console.log("authenticateFinish Response\n"+JSON.stringify(finishRes));
+            }
+
         })
     }
 
@@ -107,10 +148,18 @@
         return await navigator.credentials.create({publicKey: (decodePublicKeyCredentialCreationOptions(request.publicKeyCredentialCreationOptions))});
     }
 
+    async function executeAuthenticateRequest(request){
+        console.log("executeAuthenticateRequest Info\n" + request));
+        return await navigator.credentials.get({
+            publicKey: decodePublicKeyCredentialRequestOptions(request),
+        });
+    }
+
 
 </script>
 </head>
 <body>
+    <h1>WebAuthn with SpringBoot</h1>
     <b>User name : </b>
     <input type="text"  id="user_name">
     <Br>
@@ -123,5 +172,6 @@
     <b>U2F 여부</b>
     <input type="checkbox" id="u2f">
     <button type="button" onclick="register()"> Register new account</button>
+    <button type="button" onclick="authenticate()">Authenticate</button>
 </body>
 </html>
