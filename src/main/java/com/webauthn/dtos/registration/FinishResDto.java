@@ -1,4 +1,4 @@
-package com.webauthn.dtos;
+package com.webauthn.dtos.registration;
 
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
