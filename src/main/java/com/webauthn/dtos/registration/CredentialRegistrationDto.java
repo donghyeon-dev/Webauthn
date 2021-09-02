@@ -1,6 +1,5 @@
-package com.webauthn.dtos;
+package com.webauthn.dtos.registration;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.data.UserIdentity;
 import lombok.AllArgsConstructor;

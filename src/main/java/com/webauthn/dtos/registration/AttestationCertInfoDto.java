@@ -1,4 +1,4 @@
-package com.webauthn.dtos;
+package com.webauthn.dtos.registration;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.data.ByteArray;
