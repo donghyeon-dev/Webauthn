@@ -2,7 +2,7 @@ package com.webauthn.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.webauthn.dtos.RedisDto;
+import com.webauthn.dtos.registration.RedisDto;
 import com.yubico.webauthn.data.ByteArray;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,6 @@ import org.springframework.util.ObjectUtils;
 
 import java.time.ZonedDateTime;
 import java.util.Date;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -40,14 +39,25 @@ public class RedisUtils {
     }
 
     /**
-     * Redis내 key값과 저장된 값이 일치한지 검사
+     * Redis내 key값과 Registration session내 저장된 값이 일치한지 검사
      */
-    public boolean isRequestIdInRedis(String key) throws JsonProcessingException {
+    public boolean isRegisterRequestIdInRedis(String key) throws JsonProcessingException {
         ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
         String value = valueOperations.get(key);
         RedisDto outpVo = objectMapper.readValue(value, RedisDto.class);
 
-        return key.equals(outpVo.getRequestId().getBase64());
+        return key.equals(outpVo.getRegistrationResponse().getRequestId().getBase64());
+    }
+
+    /**
+     * Redis내 key값과 Authenticate session내 저장된 값이 일치한지 검사
+     */
+    public boolean isAuthenticateRequestIdInRedis(String key) throws JsonProcessingException {
+        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+        String value = valueOperations.get(key);
+        RedisDto outpVo = objectMapper.readValue(value, RedisDto.class);
+
+        return key.equals(outpVo.getAuthenticateResponse().getRequestId().getBase64());
     }
 
     /**
@@ -91,7 +101,7 @@ public class RedisUtils {
         String value = valueOperations.get(key);
         RedisDto outpVo = objectMapper.readValue(value, RedisDto.class);
 
-        ByteArray storedToken = outpVo.getSessionToken();
+        ByteArray storedToken = outpVo.getRegistrationResponse().getSessionToken();
         String storedTokenString = storedToken.getBase64();
         return token.equals(storedTokenString);
 

@@ -1,7 +1,8 @@
-package com.webauthn.dtos;
+package com.webauthn.dtos.registration;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.webauthn.domain.UserEntity;
+import com.webauthn.dtos.authentication.StartAuthResDto;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import lombok.AllArgsConstructor;
@@ -21,15 +22,10 @@ import java.util.Optional;
 @Builder
 public class RedisDto {
 
-    private String username;
+    // startRegistration에 put, finishRegistration에 get
+    private RegResDto registrationResponse;
 
-    private Optional<String> credentialNickname;
-
-    private ByteArray requestId;
-
-    private PublicKeyCredentialCreationOptions publicKeyCredentialCreationOptions;
-
-    private ByteArray sessionToken;
+    private StartAuthResDto authenticateResponse;
 
     private UserEntity user;
 }
