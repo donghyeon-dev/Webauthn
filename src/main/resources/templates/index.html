@@ -67,6 +67,7 @@
     logout = () => {
         sessionStorage.clear();
         document.getElementById('login').value = "세션토큰삭제됨" ;
+        document.getElementById("session_token").value = "";
     }
 
     register = () =>{
@@ -89,10 +90,15 @@
             contentType:"application/json",
             data:body,
             async:false,
+            error : function(finishRes){
+                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
+
+            },
             success : async function(data){
                 console.log( "startRegistration() Result Data\n"+ JSON.stringify(data) );
                 var credential = await createCredential(data);
                 var result = await webauthn.responseToObject(credential);
+                document.getElementById('response').value =  JSON.stringify( data, null, 4 );
                 return registrationFinish(data,result);
             }
 
@@ -113,10 +119,14 @@
             contentType:"application/json",
             data:body,
             async: false,
+            error : function(finishRes){
+                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
+            },
             success: async function(res){
                 console.log("startAuthenticate() Result Data\n" + JSON.stringify(res));
                 var authRequest = await executeAuthenticateRequest(res);
                 var result = await webauthn.responseToObject(authRequest);
+                document.getElementById('response').value =  JSON.stringify( res, null, 4 );
                 return authenticateFinish(res,result);
             }
         })
@@ -137,11 +147,15 @@
                 credentialNickname: request.credentialNickname
             }),
             async:false,
+            error : function(finishRes){
+                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
+            },
             success : function(finishRes){
                 console.log( "registrationFinish Response\n"+ JSON.stringify(finishRes) );
-                document.getElementById('response').value(JSON.stringify( JSON.parse(finishRes), undefined, 4 ));
+                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
 
             }
+
         })
     }
 
@@ -156,6 +170,9 @@
                 sessionToken: request.sessionToken || null
             }),
             async: false,
+            error : function(finishRes){
+                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
+            },
             success: function(finishRes){
                 console.log("authenticateFinish Response\n"+JSON.stringify(finishRes));
                 sessionStorage.setItem("sessionToken", finishRes.sessionToken);
