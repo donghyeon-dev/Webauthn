@@ -29,7 +29,7 @@ public class CredentialEntity {
 
     private LocalDateTime created;
 
-    // RegisteredCredential 목록
+    // RegisteredCredential.class
     // ByteArray to Base64
     @Column
     private String credentialId;
@@ -39,6 +39,8 @@ public class CredentialEntity {
     @Column String publicKeyCose;
 
     private long signatureCount;
+
+    // end of RegistredCredential.class
 
 
     private String getUserName(){

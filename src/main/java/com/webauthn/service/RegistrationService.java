@@ -38,7 +38,6 @@ public class RegistrationService {
         String username = requestBody.getUsername();
         String displayName = requestBody.getDisplayName();
         String credentialNickname = requestBody.getCredentialNickname();
-        boolean requiredResidentKey = requestBody.isRequireResidentKey();
         ByteArray userId = commonUtils.getRandomByte(32);
         ByteArray requestId = commonUtils.getRandomByte(32);
 
@@ -70,7 +69,7 @@ public class RegistrationService {
                                     .user(regiUser)
                                     .authenticatorSelection (
                                             AuthenticatorSelectionCriteria.builder()
-                                                    .requireResidentKey(requiredResidentKey)
+                                                    .requireResidentKey(false)
                                                     .build()
                                     )
                             .build()

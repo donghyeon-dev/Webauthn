@@ -28,4 +28,6 @@ public class RedisDto {
     private StartAuthResDto authenticateResponse;
 
     private UserEntity user;
+
+    private String sessionToken;
 }

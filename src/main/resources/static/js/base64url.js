@@ -53,6 +53,7 @@
   }
 
   function toByteArray(code) {
+    console.log("code =======\n"+code);
     return base64js.toByteArray(base64UrlToMime(code));
   }
 

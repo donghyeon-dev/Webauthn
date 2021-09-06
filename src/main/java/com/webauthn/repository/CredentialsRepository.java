@@ -42,20 +42,30 @@ public class CredentialsRepository implements CredentialRepository {
                     ).collect(Collectors.toSet());
         }
     }
-
+    // 완성해야함
     @Override
     public Optional<ByteArray> getUserHandleForUsername(String username) {
-        return Optional.empty();
+        String byteArray = credentialEntityRepository.findCredentialEntityByUser_Name(username).getUser().getId();
+        return Optional.of(ByteArray.fromBase64(byteArray));
     }
-
+    // 완성해야함
     @Override
     public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
-        return Optional.empty();
+        CredentialEntity targetCredential= credentialEntityRepository.findCredentialEntityByUserHandle(userHandle.getBase64());
+        return Optional.of(targetCredential.getUser().getName());
     }
-
+    // 완성해야
     @Override
     public Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle) {
-        return Optional.empty();
+        CredentialEntity targetEntity = credentialEntityRepository.findCredentialEntityByCredentialId(credentialId.getBase64());
+        RegisteredCredential result = RegisteredCredential.builder()
+                .credentialId(ByteArray.fromBase64(targetEntity.getCredentialId()))
+                .userHandle(ByteArray.fromBase64(targetEntity.getUserHandle()))
+                .publicKeyCose(ByteArray.fromBase64(targetEntity.getPublicKeyCose()))
+                .signatureCount(targetEntity.getSignatureCount())
+                .build();
+
+        return Optional.of(result);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.webauthn.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.webauthn.dtos.authentication.FinishAuthReqDto;
+import com.webauthn.dtos.authentication.FinishAuthResDto;
 import com.webauthn.dtos.authentication.StartAuthReqDto;
 import com.webauthn.dtos.authentication.StartAuthResDto;
 import com.webauthn.service.AuthenticationService;
@@ -26,7 +27,7 @@ public class AuthenticationController {
     }
 
     @PostMapping(path = "/authenticate/finish")
-    public String finishAuthenticate(@RequestBody FinishAuthReqDto reqDto) throws Exception {
+    public FinishAuthResDto finishAuthenticate(@RequestBody FinishAuthReqDto reqDto) throws Exception {
         return authenticationService.finishAuthenticate(reqDto);
     }
 }

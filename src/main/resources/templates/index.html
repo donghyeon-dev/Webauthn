@@ -45,8 +45,28 @@
         return publicKeyCredentialCreationOptions;
     }
 
+    function decodePublicKeyCredentialRequestOptions(request) {
+        const allowCredentials = request.allowCredentials && request.allowCredentials.map(credential => extend(
+            credential, {
+                id: base64url.toByteArray(credential.id),
+            }));
+        console.log("request.challenge############\n" + request);
+        const publicKeyCredentialRequestOptions = extend(
+            request, {
+                allowCredentials,
+                challenge: base64url.toByteArray(request.challenge),
+            });
+
+        return publicKeyCredentialRequestOptions;
+    }
+
     function extend(obj, more) {
         return Object.assign({}, obj, more);
+    }
+
+    logout = () => {
+        sessionStorage.clear();
+        document.getElementById('login').value = "세션토큰삭제됨" ;
     }
 
     register = () =>{
@@ -54,15 +74,13 @@
         const username = document.getElementById('user_name').value;
         const displayName = document.getElementById('display_name').value;
         const credentialNickname = document.getElementById('credential_nickname').value;
-        const u2f = document.getElementById('u2f').checked;
 
         var request;
         var credentials;
         let body = JSON.stringify({
                 username : username,
                 displayName: displayName,
-                credentialNickname : credentialNickname,
-                u2f : u2f
+                credentialNickname : credentialNickname
             });
 
         $.ajax({
@@ -121,6 +139,8 @@
             async:false,
             success : function(finishRes){
                 console.log( "registrationFinish Response\n"+ JSON.stringify(finishRes) );
+                document.getElementById('response').value(JSON.stringify( JSON.parse(finishRes), undefined, 4 ));
+
             }
         })
     }
@@ -138,6 +158,10 @@
             async: false,
             success: function(finishRes){
                 console.log("authenticateFinish Response\n"+JSON.stringify(finishRes));
+                sessionStorage.setItem("sessionToken", finishRes.sessionToken);
+                document.getElementById('session_token').value = sessionStorage.getItem("sessionToken");
+                document.getElementById('login').value = "로그인 상태";
+                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
             }
 
         })
@@ -149,9 +173,9 @@
     }
 
     async function executeAuthenticateRequest(request){
-        console.log("executeAuthenticateRequest Info\n" + request));
+        console.log("executeAuthenticateRequest Info\n" + JSON.stringify(request));
         return await navigator.credentials.get({
-            publicKey: decodePublicKeyCredentialRequestOptions(request),
+            publicKey: decodePublicKeyCredentialRequestOptions(request.publicKeyCredentialRequestOptions),
         });
     }
 
@@ -169,9 +193,22 @@
     <b>Credential Nickname : </b>
     <input type="text" id="credential_nickname">
     <br>
-    <b>U2F 여부</b>
-    <input type="checkbox" id="u2f">
     <button type="button" onclick="register()"> Register new account</button>
+    <br>
     <button type="button" onclick="authenticate()">Authenticate</button>
+    <br>
+    <button type="button" onclick="logout()">logout</button>
+
+    <Br><br>
+    <b>Session Token</b>
+    <textarea cols=50 rows=1 readonly id="session_token"></textarea>
+    <br>
+    <b>is user Authenticated?</b>
+    <input  readonly type="text" id="login">
+
+    <br><br>
+
+    <h2>Response</h2>
+    <textarea cols=100 rows=50 readonly id="response"></textarea>
 </body>
 </html>

@@ -1,8 +1,15 @@
 package com.webauthn.config;
 
+import com.webauthn.domain.CredentialEntity;
+import com.webauthn.domain.UserEntity;
+import com.webauthn.dtos.entity.CredentialDto;
+import com.webauthn.dtos.entity.UserDto;
 import com.webauthn.repository.CredentialsRepository;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.PropertyMap;
+import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +29,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Value("${spring.redis.host}")
     private String redisHost;
 
+    private final ModelMapper modelMapper = new ModelMapper();
+
+    // REDIS
     @Bean
     public RedisConnectionFactory redisConnectionFactory(){
         return new LettuceConnectionFactory(redisHost,redisPort);
@@ -35,4 +45,18 @@ public class WebMvcConfig implements WebMvcConfigurer {
         redisTemplate.setConnectionFactory(redisConnectionFactory());
         return redisTemplate;
     }
+
+    @Bean
+    public ModelMapper userMapper(){
+        modelMapper.getConfiguration()
+                .setMatchingStrategy(MatchingStrategies.STANDARD);
+        modelMapper.addMappings(creMap);
+        return modelMapper;
+    }
+
+    PropertyMap<CredentialEntity, CredentialDto> creMap = new PropertyMap<CredentialEntity, CredentialDto>(){
+        protected void configure(){
+           skip(destination.getUserId());
+        }
+    };
 }

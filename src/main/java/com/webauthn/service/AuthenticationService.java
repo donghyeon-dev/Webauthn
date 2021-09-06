@@ -2,8 +2,13 @@ package com.webauthn.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.webauthn.domain.CredentialEntity;
+import com.webauthn.domain.UserEntity;
+import com.webauthn.dtos.authentication.FinishAuthResDto;
+import com.webauthn.dtos.entity.CredentialDto;
+import com.webauthn.dtos.entity.UserDto;
 import com.webauthn.dtos.registration.RedisDto;
 import com.webauthn.repository.CredentialRepository;
+import com.webauthn.repository.CredentialsRepository;
 import com.webauthn.utils.CommonUtils;
 import com.webauthn.dtos.authentication.FinishAuthReqDto;
 import com.webauthn.dtos.authentication.StartAuthReqDto;
@@ -14,8 +19,13 @@ import com.yubico.webauthn.AssertionRequest;
 import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.FinishAssertionOptions;
 import com.yubico.webauthn.StartAssertionOptions;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.exception.AssertionFailedException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import javax.management.InvalidAttributeValueException;
@@ -23,13 +33,14 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final CommonUtils commonUtils;
-    private final RegistrationService registrationService;
     private final CredentialRepository credentialRepository;
     private final RedisUtils redisUtils;
+    private final ModelMapper modelMapper;
 
 
     public StartAuthResDto startAuthenticate(StartAuthReqDto reqDto) throws JsonProcessingException {
@@ -65,7 +76,8 @@ public class AuthenticationService {
         }
     }
 
-    public String finishAuthenticate(FinishAuthReqDto requestBody) throws Exception {
+    @Transactional
+    public FinishAuthResDto finishAuthenticate(FinishAuthReqDto requestBody) throws Exception {
 
         String requestId = requestBody.getRequestId().getBase64();
         boolean isInRedis = redisUtils.isAuthenticateRequestIdInRedis(requestId);
@@ -74,7 +86,8 @@ public class AuthenticationService {
         if(!isInRedis){
             throw new InvalidAttributeValueException("Invalid RequestId!!");
         }
-        StartAuthResDto exRequest = redisUtils.getSession(requestId).getAuthenticateResponse();
+        RedisDto redisDto = redisUtils.getSession(requestId);
+        StartAuthResDto exRequest = redisDto.getAuthenticateResponse();
         redisUtils.deleteSession(requestId);
 
         if(ObjectUtils.isEmpty(exRequest)){
@@ -90,10 +103,42 @@ public class AuthenticationService {
                                 .build()
                 );
 
-//        if(result.isSuccess()){용
-//            credentialRepository.updateSignatureCount()
-//        }
+        if(result.isSuccess()){
+            UserEntity targetUser = userRepository.findUserEntityByName(exRequest.getUsername().get());
 
-        return "Hi";
+            // SignaturCount 업데이트
+            credentialRepository.updateSignatureCount(
+                    result.getSignatureCount(),
+                    credentialRepository.findCredentialEntityByUser_UserId(targetUser.getUserId()).getId());
+
+            credentialRepository.flush();
+            CredentialDto credentialDto =
+                modelMapper.map(
+                    credentialRepository.findCredentialEntityByUser_UserId(targetUser.getUserId()),
+                        CredentialDto.class
+                );
+            credentialDto.setUserId(targetUser.getUserId());
+
+            // 세션토큰 생성
+            String sessionId = commonUtils.getRandomByte(32).getBase64();
+            redisDto.setSessionToken(sessionId);
+
+            // 세션저장
+            redisUtils.putSession(result.getUserHandle().getBase64(),
+                    redisDto);
+            //ResponseDto 생성
+            FinishAuthResDto resDto = FinishAuthResDto.builder()
+                    .request(exRequest)
+                    .response(requestBody)
+                    .registrations(credentialDto)
+                    .username(result.getUsername())
+                    .sessionToken(ByteArray.fromBase64(sessionId))
+                    .warnings(result.getWarnings())
+                    .build();
+
+            return resDto;
+        } else {
+            throw new AssertionFailedException("AssertionFailed");
+        }
     }
 }
