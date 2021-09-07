@@ -152,7 +152,10 @@
             },
             success : function(finishRes){
                 console.log( "registrationFinish Response\n"+ JSON.stringify(finishRes) );
-                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
+                document.getElementById('response').value =  JSON.stringify( res, null, 4 );
+                sessionStorage.setItem("sessionToken", finishRes.sessionToken);
+                document.getElementById('session_token').value = sessionStorage.getItem("sessionToken");
+
 
             }
 
@@ -226,6 +229,6 @@
     <br><br>
 
     <h2>Response</h2>
-    <textarea cols=100 rows=50 readonly id="response"></textarea>
+    <textarea cols=150 rows=50 readonly id="response"></textarea>
 </body>
 </html>

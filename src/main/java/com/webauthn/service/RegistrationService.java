@@ -2,6 +2,7 @@ package com.webauthn.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.webauthn.dtos.entity.CredentialDto;
 import com.webauthn.utils.CommonUtils;
 import com.webauthn.domain.CredentialEntity;
 import com.webauthn.domain.UserEntity;
@@ -13,6 +14,7 @@ import com.yubico.webauthn.*;
 import com.yubico.webauthn.data.*;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
@@ -29,6 +31,7 @@ public class RegistrationService {
     private final CredentialRepository credentialEntityRepository;
     private final RedisUtils redisUtils;
     private final CommonUtils commonUtils;
+    private final ModelMapper modelMapper;
 
 
 
@@ -99,7 +102,8 @@ public class RegistrationService {
         if(!isInRedis){
             throw new InvalidAttributeValueException("Invalid RequestId!!");
         }
-        RegResDto exRequest = redisUtils.getSession(requestId).getRegistrationResponse();
+        RedisDto redisDto = redisUtils.getSession(requestId);
+        RegResDto exRequest = redisDto.getRegistrationResponse();
         redisUtils.deleteSession(requestId);
 
         // Empty check
@@ -162,12 +166,7 @@ public class RegistrationService {
             return FinishResDto.builder()
                     .request(regResDto)
                     .response(requestBody)
-                    .registration(CredentialRegistrationDto.builder()
-                            .userIdentity(exRequest.getPublicKeyCredentialCreationOptions().getUser())
-                            .name(exRequest.getCredentialNickname())
-                            .response(requestBody)
-                            .result(registrationResult)
-                            .build())
+                    .registration(modelMapper.map(credentialEntity, CredentialDto.class))
                     .attestationTrusted(registrationResult.isAttestationTrusted())
                     .authData(requestBody.getCredential().getResponse().getParsedAuthenticatorData())
                     .username(regResDto.getUsername())

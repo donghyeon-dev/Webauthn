@@ -1,5 +1,6 @@
 package com.webauthn.dtos.registration;
 
+import com.webauthn.dtos.entity.CredentialDto;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,7 @@ public class FinishResDto {
     final boolean success = true;
     RegResDto request;
     FinishReqDto response;
-    CredentialRegistrationDto registration;
+    CredentialDto registration;
     boolean attestationTrusted;
     Optional<AttestationCertInfoDto> attestationCert;
 

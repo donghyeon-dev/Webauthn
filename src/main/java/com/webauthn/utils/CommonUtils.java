@@ -29,7 +29,7 @@ public class CommonUtils {
     private final CredentialsRepository credentialsRepository;
     private final static SecureRandom random = new SecureRandom();
 
-    public  RelyingPartyIdentity rpIdentity(){
+    public final  RelyingPartyIdentity rpIdentity(){
         return RelyingPartyIdentity.builder()
                 .id("localhost")
                 .name("Webauthn with Sprigboot")
@@ -37,7 +37,7 @@ public class CommonUtils {
     };
 
 
-    public  RelyingParty rp() {
+    public final  RelyingParty rp() {
     return  RelyingParty.builder()
                 .identity(rpIdentity())
                 .credentialRepository(credentialsRepository)
