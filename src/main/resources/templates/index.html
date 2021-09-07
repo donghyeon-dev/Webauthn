@@ -91,7 +91,7 @@
             data:body,
             async:false,
             error : function(finishRes){
-                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
+                document.getElementById('response').value =  JSON.stringify( finishRes.responseJSON.message, null, 4 );
 
             },
             success : async function(data){
@@ -120,7 +120,7 @@
             data:body,
             async: false,
             error : function(finishRes){
-                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
+                document.getElementById('response').value =  JSON.stringify( finishRes.responseJSON.message, null, 4 );
             },
             success: async function(res){
                 console.log("startAuthenticate() Result Data\n" + JSON.stringify(res));
@@ -148,7 +148,7 @@
             }),
             async:false,
             error : function(finishRes){
-                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
+                document.getElementById('response').value =  JSON.stringify( finishRes.responseJSON.message, null, 4 );
             },
             success : function(finishRes){
                 console.log( "registrationFinish Response\n"+ JSON.stringify(finishRes) );
@@ -174,7 +174,7 @@
             }),
             async: false,
             error : function(finishRes){
-                document.getElementById('response').value =  JSON.stringify( finishRes, null, 4 );
+                document.getElementById('response').value =  JSON.stringify( finishRes.responseJSON.message, null, 4 );
             },
             success: function(finishRes){
                 console.log("authenticateFinish Response\n"+JSON.stringify(finishRes));
